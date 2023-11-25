@@ -45,9 +45,8 @@ def gen_data(tasks, num_traj, noise, res, include_depth, camera, data_dir_path,
     act_tolerance = 1e-5
     lim = 1 - act_tolerance
 
-    print(f'Available tasks: {metaworld.ML1.ENV_NAMES}, in total {len(metaworld.ML1.ENV_NAMES)} tasks.')  # Check out the available environments
-
-    print(','.join([x[0:len(x)-3] for x in metaworld.ML1.ENV_NAMES]))
+    #print(f'Available tasks: {metaworld.ML1.ENV_NAMES}, in total {len(metaworld.ML1.ENV_NAMES)} tasks.')  # Check out the available environments
+    #print(','.join([x[0:len(x)-3] for x in metaworld.ML1.ENV_NAMES]))
     cases = play_cases if use_play_policy else test_cases_latest_nonoise
 
     for case in cases:
@@ -76,8 +75,10 @@ def gen_data(tasks, num_traj, noise, res, include_depth, camera, data_dir_path,
         data_file_name = task_name + '-num-traj_' + str(num_traj) + '-noise_' + str(noise) + (("-PLAYPOLICY"+"-ctr-max_" +str(counter_max) + "-grip-flip-p_" + str(grip_flip_p)) if use_play_policy else "") + '-res_' + str(height) + '_' + str(width) + '-cam_' + camera + '-depth_' + str(include_depth) + '_' + dt.strftime("%d-%m-%Y-%H.%M.%S") + '.hdf5'
         video_path_root = 'movies'
         video_dir_path = os.path.join(video_path_root, task_name + '-noise_' + str(noise) + (("-PLAYPOLICY"+"-ctr-max_" +str(counter_max) + "-grip-flip-p_" + str(grip_flip_p)) if use_play_policy else "") + '-res_' + str(height) + '_' + str(width) + '-cam_' + camera + '_' + dt.strftime("%d-%m-%Y-%H.%M.%S"))
-
-        data_writer = MWDatasetWriter(data_dir_path, data_file_name, env, task_name, res, camera, include_depth, act_tolerance, MAX_steps_at_goal, write_data=write_data)
+        task_noise_dir_path = os.path.join(data_dir_path,task_name,'Sawyer', f'noise{noise}')
+        assert not os.path.exists(task_noise_dir_path), f"ERROR: {task_noise_dir_path} already exists. You are risking generating more data than you intend to without noticing."
+        os.makedirs(task_noise_dir_path)
+        data_writer = MWDatasetWriter(task_noise_dir_path, data_file_name, env, task_name, res, camera, include_depth, act_tolerance, MAX_steps_at_goal, write_data=write_data)
 
         for attempt in range(num_traj):
             video_writer = MWVideoWriter(video_dir_path, task_name + '-' + str(attempt + 1), video_fps, res, write_video=write_video)
@@ -152,7 +153,7 @@ def gen_data(tasks, num_traj, noise, res, include_depth, camera, data_dir_path,
 
         # Check the created dataset
         if write_data:
-            qlearning_dataset(os.path.join(data_dir_path, data_file_name), reward_type='subgoal')
+            qlearning_dataset(os.path.join(task_noise_dir_path, data_file_name), reward_type='subgoal')
 
 
 
